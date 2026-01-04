@@ -1,0 +1,19 @@
+<svg width="88" height="61" viewBox="0 0 88 61" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M35.7467 22.1786C43.7353 11.859 63.3735 13.8574 70.6983 23.2111C78.023 32.5647 78.0157 46.8133 70.6982 56.7938" stroke="white" stroke-width="12"/>
+    <path d="M52.0503 40.135C41.7347 52.4689 22.9499 48.8055 15.7754 37.8205C8.60096 26.8356 9.63735 13.8346 17.7823 4.51712" stroke="white" stroke-width="12"/>
+</svg>
+
+<!--        This project is the monolithic backend API for the OpenSourceDUTH team. Access to open data compiled and provided by the OpenSourceDUTH University Team as well as helper endpoints to integrate with our apps.-->
+<!--        API Copyright (C) 2025 OpenSourceDUTH-->
+<!--        This program is free software: you can redistribute it and/or modify-->
+<!--        it under the terms of the GNU General Public License as published by-->
+<!--        the Free Software Foundation, either version 3 of the License, or-->
+<!--        (at your option) any later version.-->
+
+<!--        This program is distributed in the hope that it will be useful,-->
+<!--        but WITHOUT ANY WARRANTY; without even the implied warranty of-->
+<!--        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the-->
+<!--        GNU General Public License for more details.-->
+
+<!--        You should have received a copy of the GNU General Public License-->
+<!--        along with this program.  If not, see <https://www.gnu.org/licenses/>.-->
