@@ -56,7 +56,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		authHeader := c.GetHeader(HeaderAuthorization)
 		if authHeader == "" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "missing authorization header",
+				"error": "Missing authorization header",
 			})
 			return
 		}
@@ -65,7 +65,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "invalid authorization header format",
+				"error": "Invalid authorization header format",
 			})
 			return
 		}
@@ -84,7 +84,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		feature, err := m.features.GetFeatureBySlug(featureSlug)
 		if err != nil || feature == nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "feature not found",
+				"error": "Feature not found",
 			})
 			return
 		}
@@ -93,13 +93,13 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		adminOnly, err := m.features.IsFeatureAdminOnly(feature.ID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to check feature permissions",
+				"error": "Failed to check feature permissions",
 			})
 			return
 		}
 		if adminOnly && !validated.Token.AdminCreated {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": "this feature requires an admin-issued token",
+				"error": "This feature requires an admin-issued token",
 			})
 			return
 		}
@@ -108,13 +108,13 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		hasAccess, err := m.features.TokenHasFeatureAccess(validated.FeatureIDs, featureSlug)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to check feature access",
+				"error": "Failed to check feature access",
 			})
 			return
 		}
 		if !hasAccess {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": fmt.Sprintf("token does not have access to feature '%s'", featureSlug),
+				"error": fmt.Sprintf("Token does not have access to feature '%s'", featureSlug),
 			})
 			return
 		}
@@ -125,7 +125,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 			canonicalIP, err := CanonicalizeIP(clientIP)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-					"error": "invalid client IP",
+					"error": "Invalid client IP",
 				})
 				return
 			}
@@ -142,7 +142,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 		effectiveRPM, err := m.quota.GetEffectiveRPM(validated.User.ID, feature.ID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "failed to check quota",
+				"error": "Failed to check quota",
 			})
 			return
 		}
@@ -152,7 +152,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 			currentRPM, err := m.usage.GetFeatureRPM(validated.User.ID, feature.ID)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-					"error": "failed to check usage",
+					"error": "Failed to check usage",
 				})
 				return
 			}
@@ -171,7 +171,7 @@ func (m *Middleware) RequireToken(featureSlug string) gin.HandlerFunc {
 			if currentRPM >= effectiveRPM {
 				c.Header(HeaderRetryAfter, "60")
 				c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{
-					"error":      "rate limit exceeded",
+					"error":      "Rate limit exceeded",
 					"limit":      effectiveRPM,
 					"retryAfter": 60,
 				})
@@ -196,7 +196,7 @@ func (m *Middleware) RequireSession() gin.HandlerFunc {
 		sessionID, err := m.sessionStore.GetSessionFromCookie(c)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "not authenticated",
+				"error": "Not authenticated",
 			})
 			return
 		}
@@ -205,7 +205,7 @@ func (m *Middleware) RequireSession() gin.HandlerFunc {
 		if err != nil || user == nil {
 			m.sessionStore.ClearSessionCookie(c)
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "session expired or invalid",
+				"error": "Session expired or invalid",
 			})
 			return
 		}
@@ -214,7 +214,7 @@ func (m *Middleware) RequireSession() gin.HandlerFunc {
 		if user.Status != StatusActive {
 			m.sessionStore.ClearSessionCookie(c)
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": fmt.Sprintf("account is %s", user.Status),
+				"error": fmt.Sprintf("Account is %s", user.Status),
 			})
 			return
 		}
@@ -230,7 +230,7 @@ func (m *Middleware) RequireRole(role Role) gin.HandlerFunc {
 		userVal, exists := c.Get(ContextKeyUser)
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
-				"error": "not authenticated",
+				"error": "Not authenticated",
 			})
 			return
 		}
@@ -238,14 +238,14 @@ func (m *Middleware) RequireRole(role Role) gin.HandlerFunc {
 		user, ok := userVal.(*User)
 		if !ok {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
-				"error": "invalid user context",
+				"error": "Invalid user context",
 			})
 			return
 		}
 
 		if user.Role != role && user.Role != RoleAdmin {
 			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
-				"error": fmt.Sprintf("requires %s role", role),
+				"error": fmt.Sprintf("Requires %s role", role),
 			})
 			return
 		}
