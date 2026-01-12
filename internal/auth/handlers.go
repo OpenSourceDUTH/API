@@ -11,7 +11,6 @@ import (
 )
 
 const (
-	// OAuthStateCookieName is the cookie name for OAuth state
 	OAuthStateCookieName = "osduth_oauth_state"
 )
 
