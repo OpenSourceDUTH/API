@@ -67,7 +67,7 @@ func (s *TokenStore) CreateUserToken(userID int64, label string, featureSlugs []
 	// Validate label
 	label = strings.TrimSpace(label)
 	if label == "" {
-		return nil, fmt.Errorf("token label is required")
+		return nil, fmt.Errorf("Token label is required")
 	}
 
 	// Check token limit
@@ -76,7 +76,7 @@ func (s *TokenStore) CreateUserToken(userID int64, label string, featureSlugs []
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("user not found")
+		return nil, fmt.Errorf("User not found")
 	}
 
 	count, err := s.repo.GetUserTokenCount(userID)
@@ -84,7 +84,7 @@ func (s *TokenStore) CreateUserToken(userID int64, label string, featureSlugs []
 		return nil, err
 	}
 	if count >= user.MaxTokens {
-		return nil, fmt.Errorf("maximum token limit (%d) reached", user.MaxTokens)
+		return nil, fmt.Errorf("Maximum token limit (%d) reached", user.MaxTokens)
 	}
 
 	// Validate features exist and are not admin-only
@@ -93,16 +93,16 @@ func (s *TokenStore) CreateUserToken(userID int64, label string, featureSlugs []
 		return nil, err
 	}
 	if len(features) == 0 {
-		return nil, fmt.Errorf("at least one valid feature is required")
+		return nil, fmt.Errorf("At least one valid feature is required")
 	}
 	if len(features) != len(featureSlugs) {
-		return nil, fmt.Errorf("one or more features not found")
+		return nil, fmt.Errorf("One or more features not found")
 	}
 
 	// Check for admin-only features
 	for _, f := range features {
 		if f.AdminOnly {
-			return nil, fmt.Errorf("feature '%s' is admin-only and cannot be assigned by users", f.Slug)
+			return nil, fmt.Errorf("Feature '%s' is admin-only and cannot be assigned by users", f.Slug)
 		}
 	}
 
@@ -127,7 +127,7 @@ func (s *TokenStore) CreateAdminToken(userID int64, label string, featureSlugs [
 	// Validate label
 	label = strings.TrimSpace(label)
 	if label == "" {
-		return nil, fmt.Errorf("token label is required")
+		return nil, fmt.Errorf("Token label is required")
 	}
 
 	// Validate features exist
@@ -136,10 +136,10 @@ func (s *TokenStore) CreateAdminToken(userID int64, label string, featureSlugs [
 		return nil, err
 	}
 	if len(features) == 0 {
-		return nil, fmt.Errorf("at least one valid feature is required")
+		return nil, fmt.Errorf("At least one valid feature is required")
 	}
 	if len(features) != len(featureSlugs) {
-		return nil, fmt.Errorf("one or more features not found")
+		return nil, fmt.Errorf("One or more features not found")
 	}
 
 	// Canonicalize IPs

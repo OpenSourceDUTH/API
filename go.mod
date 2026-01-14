@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 )
 
-require github.com/joho/godotenv v1.5.1 // indirect
+require github.com/joho/godotenv v1.5.1
 
 require (
 	cloud.google.com/go/compute/metadata v0.8.0 // indirect

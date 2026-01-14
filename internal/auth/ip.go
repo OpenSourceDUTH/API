@@ -11,14 +11,14 @@ import (
 func CanonicalizeIP(ip string) (string, error) {
 	parsed := net.ParseIP(ip)
 	if parsed == nil {
-		return "", fmt.Errorf("invalid IP address: %s", ip)
+		return "", fmt.Errorf("Invalid IP address: %s", ip)
 	}
 
 	// Convert to 16-byte representation for consistency
 	// IPv4 addresses will be represented as IPv4-mapped IPv6 addresses
 	canonical := parsed.To16()
 	if canonical == nil {
-		return "", fmt.Errorf("failed to canonicalize IP address: %s", ip)
+		return "", fmt.Errorf("Failed to canonicalize IP address: %s", ip)
 	}
 
 	return canonical.String(), nil
@@ -56,6 +56,7 @@ func IsIPAllowed(ip string, allowedIPs []string) bool {
 
 // ValidateAndCanonicalizeIP validates an IP address and returns its canonical form.
 // This is a convenience function combining validation and canonicalization.
+// 9/10 times use this.
 func ValidateAndCanonicalizeIP(ip string) (string, bool) {
 	canonical, err := CanonicalizeIP(ip)
 	if err != nil {

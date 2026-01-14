@@ -19,7 +19,7 @@ func (r *Repository) DB() *sql.DB {
 	return r.db
 }
 
-// EnableWAL enables Write-Ahead Logging mode for better concurrent performance
+// EnableWAL enables Write-Ahead Logging mode for better concurrent performance. This slows startup time.
 func (r *Repository) EnableWAL() error {
 	_, err := r.db.Exec("PRAGMA journal_mode=WAL")
 	return err

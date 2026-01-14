@@ -69,3 +69,27 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 	}
 	c.JSON(http.StatusCreated, common.CreateSuccessResponse(gin.H{"id": id}))
 }
+
+// func (h *Handler) GetSchedule(c *gin.Context) {
+// 	allParameter := c.Query("all")
+// 	dateParameter := c.Query("date")
+
+// 	// Check
+// 	if dateParameter != "" {
+// 		parsedTime, err := time.Parse("02012006", dateParameter)
+// 		if err != nil {
+// 			c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"Invalid date format. Please use DDMMYYYY"}))
+// 			return
+// 		}
+
+// 		formatedDate := parsedTime.Format("2006-01-02")
+// 		test, err := h.repo.GetDateSchedule(formatedDate)
+// 		if err != nil {
+// 			c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{err.Error()}))
+// 			return
+// 		}
+
+// 	} else if allParameter == "true" {
+
+// 	}
+// }

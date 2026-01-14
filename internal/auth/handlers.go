@@ -386,7 +386,7 @@ func (h *Handler) CreateToken(c *gin.Context) {
 func (h *Handler) RevokeToken(c *gin.Context) {
 	user := GetUserFromContext(c)
 	if user == nil {
-		c.JSON(http.StatusUnauthorized, common.CreateErrorResponse([]string{"not authenticated"}))
+		c.JSON(http.StatusUnauthorized, common.CreateErrorResponse([]string{"Not authenticated"}))
 		return
 	}
 
@@ -395,7 +395,7 @@ func (h *Handler) RevokeToken(c *gin.Context) {
 	// Parse token ID
 	tokenID, err := parseID(tokenIDStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"invalid token ID"}))
+		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"Invalid token ID"}))
 		return
 	}
 
@@ -405,7 +405,7 @@ func (h *Handler) RevokeToken(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, common.CreateSuccessResponse(gin.H{
-		"message": "token revoked successfully",
+		"message": "Token revoked successfully",
 	}))
 }
 
@@ -426,5 +426,5 @@ type parseError struct {
 }
 
 func (e *parseError) Error() string {
-	return "invalid ID: " + e.s
+	return "Invalid ID: " + e.s
 }

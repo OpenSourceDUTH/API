@@ -7,12 +7,18 @@ import (
 )
 
 func RegisterRoutes(rg *gin.RouterGroup, h *Handler, authMiddleware *auth.Middleware) {
-	schedule := rg.Group("/schedule")
-	schedule.Use(authMiddleware.RequireToken("schedule"))
+	// schedule := rg.Group("/schedule")
+	// {
+	// 	schedule.GET("", authMiddleware.RequireToken("schedule"), h.GetSchedule)
+	// }
+
+	schedule_admin := rg.Group("/admin")
+	schedule_admin.Use(authMiddleware.RequireSession())
+	schedule_admin.Use(authMiddleware.RequireRole(auth.RoleAdmin))
 	{
-		schedule.POST("/foods", h.PostFood)
-		schedule.POST("/versions", h.PostVersion)
-		schedule.POST("/items", h.PostSchedule)
-		schedule.POST("/announcements", h.PostAnnouncement)
+		schedule_admin.POST("/foods", h.PostFood)
+		schedule_admin.POST("/versions", h.PostVersion)
+		schedule_admin.POST("/items", h.PostSchedule)
+		schedule_admin.POST("/announcements", h.PostAnnouncement)
 	}
 }
