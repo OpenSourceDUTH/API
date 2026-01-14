@@ -492,7 +492,7 @@ func (h *AdminHandler) GetUserUsage(c *gin.Context) {
 func (h *AdminHandler) CreateUserToken(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"invalid user ID"}))
+		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"Invalid user ID"}))
 		return
 	}
 
