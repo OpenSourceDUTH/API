@@ -22,7 +22,7 @@ func RegisterRoutes(
 		sessionProtected.Use(middleware.RequireSession())
 		{
 			sessionProtected.GET("/me", handler.Me)
-			sessionProtected.POST("/logout", handler.Logout)
+			sessionProtected.GET("/logout", handler.Logout)
 
 			// Token management
 			sessionProtected.GET("/tokens", handler.ListTokens)
