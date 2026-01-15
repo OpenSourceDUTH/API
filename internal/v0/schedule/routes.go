@@ -7,10 +7,10 @@ import (
 )
 
 func RegisterRoutes(rg *gin.RouterGroup, h *Handler, authMiddleware *auth.Middleware) {
-	// schedule := rg.Group("/schedule")
-	// {
-	// 	schedule.GET("", authMiddleware.RequireToken("schedule"), h.GetSchedule)
-	// }
+	schedule := rg.Group("/schedule")
+	{
+		schedule.GET("", authMiddleware.RequireToken("schedule"), h.GetSchedule)
+	}
 
 	schedule_admin := rg.Group("/admin")
 	schedule_admin.Use(authMiddleware.RequireSession())
