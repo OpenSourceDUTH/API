@@ -3,5 +3,7 @@ internal/databases/*.db
 .idea/
 main
 api
+internal/databases/*.db
 internal/databases/*.db-shm
 internal/databases/*.db-wal
+.vscode/
