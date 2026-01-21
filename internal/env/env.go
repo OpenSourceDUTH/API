@@ -3,6 +3,7 @@ package env
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 func GetEnv(key, defaultValue string) string {
@@ -20,6 +21,39 @@ func GetInt(key string, defaultValue int) int {
 	}
 	return defaultValue
 }
+
+func GetBool(key string, defaultValue bool) bool {
+	if value, exists := os.LookupEnv(key); exists {
+		if boolValue, err := strconv.ParseBool(value); err == nil {
+			return boolValue
+		}
+	}
+	return defaultValue
+}
+
+func GetDuration(key string, defaultValue time.Duration) time.Duration {
+	if value, exists := os.LookupEnv(key); exists {
+		if duration, err := time.ParseDuration(value); err == nil {
+			return duration
+		}
+	}
+	return defaultValue
+}
+
+// Auth-related environment variable keys
+const (
+	// OAuth Providers
+	EnvGoogleClientID     = "GOOGLE_CLIENT_ID"
+	EnvGoogleClientSecret = "GOOGLE_CLIENT_SECRET"
+	EnvGitHubClientID     = "GITHUB_CLIENT_ID"
+	EnvGitHubClientSecret = "GITHUB_CLIENT_SECRET"
+
+	// Auth Configuration
+	EnvAuthCallbackBaseURL = "AUTH_CALLBACK_BASE_URL"
+	EnvSessionSecret       = "SESSION_SECRET"
+	EnvSessionDuration     = "SESSION_DURATION"
+	EnvSecureCookies       = "SECURE_COOKIES"
+)
 
 /*
 This project is the monolithic backend API for the OpenSourceDUTH team. Access to open data compiled and provided by the OpenSourceDUTH University Team as well as helper endpoints to integrate with our apps.

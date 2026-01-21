@@ -1,1 +1,7 @@
-internal/databases/schedule.db
+internal/databases/*.db
+.env
+.idea/
+main
+api
+internal/databases/*.db-shm
+internal/databases/*.db-wal

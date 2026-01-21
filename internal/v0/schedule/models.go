@@ -28,3 +28,10 @@ type Announcement struct {
 	EndingDate   string `json:"ending_date"`
 	IsCurrent    bool   `json:"is_current"`
 }
+
+type DateSchedule struct {
+	Lunch  []Food `json:"lunch"`
+	Dinner []Food `json:"dinner"`
+}
+
+type SemesterSchedule map[int]map[int]DateSchedule

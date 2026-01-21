@@ -3,6 +3,7 @@ package schedule
 import (
 	"API/internal/v0/common"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -68,4 +69,29 @@ func (h *Handler) PostAnnouncement(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusCreated, common.CreateSuccessResponse(gin.H{"id": id}))
+}
+
+func (h *Handler) GetSchedule(c *gin.Context) {
+	allParameter := c.Query("all")
+	dateParameter := c.Query("date")
+
+	// Check
+	if dateParameter != "" {
+		parsedTime, err := time.Parse("02012006", dateParameter)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"Invalid date format. Please use DDMMYYYY"}))
+			return
+		}
+
+		formatedDate := parsedTime.Format("2006-01-02")
+		schedule, err := h.repo.GetDateSchedule(formatedDate)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{err.Error()}))
+			return
+		}
+		c.JSON(http.StatusOK, common.CreateSuccessResponse(schedule))
+		return
+	} else if allParameter == "true" {
+
+	}
 }
