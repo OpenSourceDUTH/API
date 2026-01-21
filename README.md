@@ -27,6 +27,9 @@ For our API documentation visit [opensource.cs.duth.gr/docs/](https://opensource
 "github.com/golang-migrate/migrate/v4"
 "github.com/golang-migrate/migrate/v4/database/sqlite3"
 "github.com/golang-migrate/migrate/v4/source/file"
+
+// Tools
+"github.com/air-verse/air@latest"
 ```
 ```azure
 // TOOLS

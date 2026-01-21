@@ -7,3 +7,4 @@ internal/databases/*.db
 internal/databases/*.db-shm
 internal/databases/*.db-wal
 .vscode/
+tmp/
