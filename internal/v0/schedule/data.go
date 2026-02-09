@@ -22,6 +22,7 @@ func (r *Repository) CreateFood(name string) error {
 }
 
 // CreateVersion adds a new schedule version to the database
+// TODO: Add validation for date formats
 func (r *Repository) CreateVersion(start, end string, active bool) (int64, error) {
 	res, err := r.db.Exec("INSERT INTO schedule_versions (starting_date, ending_date, is_current) VALUES (?, ?, ?)", start, end, active)
 	if err != nil {
@@ -79,7 +80,7 @@ func (r *Repository) CreateAnnouncement(annType, content, start, end string, isC
 	return res.LastInsertId()
 }
 
-func (r *Repository) GetDateSchedule(date string) (DateSchedule, error) {
+func (r *Repository) GetDateSchedule(date string) (*DateSchedule, error) {
 	var result DateSchedule
 
 	// Avoid nil slices in JSON response
@@ -89,26 +90,30 @@ func (r *Repository) GetDateSchedule(date string) (DateSchedule, error) {
 	var startingDateStr string
 	var versionID int
 	query := `SELECT id, starting_date FROM schedule_versions 
-              WHERE ? >= starting_date AND (? <= ending_date OR ending_date IS NULL) 
+              WHERE ? >= starting_date AND (? <= ending_date OR ending_date IS NULL OR ending_date = '') 
               LIMIT 1`
 
 	err := r.db.QueryRow(query, date, date).Scan(&versionID, &startingDateStr)
 	if err != nil {
-		return result, err
+		return nil, err
+	}
+	// Trim time part if exists
+	if len(startingDateStr) > 10 {
+		startingDateStr = startingDateStr[:10]
 	}
 
 	start, err := time.Parse("2006-01-02", startingDateStr)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 	target, err := time.Parse("2006-01-02", date)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	daysDiff := int(target.Sub(start).Hours() / 24)
 	if daysDiff < 0 {
-		return result, fmt.Errorf("We do not have a schedule for the requested date")
+		return nil, fmt.Errorf("We do not have a schedule for the requested date")
 	}
 
 	weekNum := ((daysDiff / 7) % 4) + 1
@@ -121,7 +126,7 @@ func (r *Repository) GetDateSchedule(date string) (DateSchedule, error) {
         JOIN schedule s ON s.id = sd.schedule_id
         WHERE s.version_id = ? AND s.week_number = ? AND s.day_number = ?`, versionID, weekNum, dayNum)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -137,7 +142,7 @@ func (r *Repository) GetDateSchedule(date string) (DateSchedule, error) {
 		}
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 // func (r *Repository) GetCurrentSchedule() {
@@ -155,3 +160,18 @@ func (r *Repository) GetDateSchedule(date string) (DateSchedule, error) {
 // func (r *Repository) GetAnnouncements(annType string) {
 
 // }
+
+//   This project is the monolithic backend API for the OpenSourceDUTH team. Access to open data compiled and provided by the OpenSourceDUTH University Team.
+//   API Copyright (C) 2025 OpenSourceDUTH
+//       This program is free software: you can redistribute it and/or modify
+//       it under the terms of the GNU General Public License as published by
+//       the Free Software Foundation, either version 3 of the License, or
+//       (at your option) any later version.
+
+//       This program is distributed in the hope that it will be useful,
+//       but WITHOUT ANY WARRANTY; without even the implied warranty of
+//       MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//       GNU General Public License for more details.
+
+//       You should have received a copy of the GNU General Public License
+//       along with this program.  If not, see <https://www.gnu.org/licenses/>.

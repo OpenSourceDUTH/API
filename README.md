@@ -5,10 +5,22 @@ Running the migration command to create the SQLite database
 go run cmd/migrate/main.go -path=schedule
 ```
 
+Compiling the project
+```bash
+go build -o bin/api cmd/api/main.go
+```
+
 Running the API server
 ```bash
+# In development mode
+go tools air run
+# Or directly
 go run cmd/api/main.go   
+# The binary
+./bin/api
 ```
+
+
 ---
 - - - 
 
@@ -31,7 +43,7 @@ For our API documentation visit [opensource.cs.duth.gr/docs/](https://opensource
 // Tools
 "github.com/air-verse/air@latest"
 ```
-```azure
+```json
 // TOOLS
 go install -tags 'sqlite3' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 ```
