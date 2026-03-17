@@ -1,10 +1,5 @@
 # OpenSourceDUTH API
 
-Running the migration command to create the SQLite database
-```bash
-go run cmd/migrate/main.go -path=schedule
-```
-
 Compiling the project
 ```bash
 go build -o bin/api cmd/api/main.go
@@ -20,7 +15,10 @@ go run cmd/api/main.go
 ./bin/api
 ```
 
-
+Running Migrations 
+```bash
+go run cmd/migrate/main.go -path=<module_name>
+```
 ---
 - - - 
 

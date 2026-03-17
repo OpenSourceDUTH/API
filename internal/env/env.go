@@ -50,6 +50,7 @@ const (
 
 	// Auth Configuration
 	EnvAuthCallbackBaseURL = "AUTH_CALLBACK_BASE_URL"
+	EnvFrontendURL         = "FRONTEND_URL"
 	EnvSessionSecret       = "SESSION_SECRET"
 	EnvSessionDuration     = "SESSION_DURATION"
 	EnvSecureCookies       = "SECURE_COOKIES"

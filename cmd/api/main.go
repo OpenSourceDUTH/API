@@ -89,6 +89,7 @@ func main() {
 		sessionStore,
 		tokenStore,
 		featureRegistry,
+		env.GetEnv(env.EnvFrontendURL, "http://localhost:4321"),
 	)
 	adminHandler := auth.NewAdminHandler(
 		authRepo,

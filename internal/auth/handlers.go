@@ -22,6 +22,7 @@ type Handler struct {
 	sessionStore *SessionStore
 	tokenStore   *TokenStore
 	features     *FeatureRegistry
+	frontendURL  string
 }
 
 // NewHandler creates a new auth handler
@@ -32,6 +33,7 @@ func NewHandler(
 	sessionStore *SessionStore,
 	tokenStore *TokenStore,
 	features *FeatureRegistry,
+	frontendURL string,
 ) *Handler {
 	return &Handler{
 		repo:         repo,
@@ -40,154 +42,151 @@ func NewHandler(
 		sessionStore: sessionStore,
 		tokenStore:   tokenStore,
 		features:     features,
+		frontendURL:  frontendURL,
 	}
 }
 
+// redirect sends the user to the frontend with optional query params
+func (h *Handler) redirect(c *gin.Context, path string, params map[string]string) {
+	url := h.frontendURL + path
+	if len(params) > 0 {
+		q := make([]string, 0, len(params))
+		for k, v := range params {
+			q = append(q, k+"="+v)
+		}
+		url += "?" + strings.Join(q, "&")
+	}
+	c.Redirect(http.StatusFound, url)
+}
+
 // Login initiates OAuth flow
-// GET /auth/login/:provider
+// GET /auth/login/:provider?redirect_uri=<path>
 func (h *Handler) Login(c *gin.Context) {
-	providerStr := c.Param("provider")
-	provider := Provider(providerStr)
+	provider := Provider(c.Param("provider"))
+	errRedirect := func(msg string) { h.redirect(c, "/auth/error", map[string]string{"error": msg}) }
 
-	// Validate provider
 	if provider != ProviderGoogle && provider != ProviderGitHub {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"unsupported provider"}))
+		errRedirect("unsupported_provider")
 		return
 	}
-
-	// Check if provider is configured
 	if !h.oauthConfig.IsProviderConfigured(provider) {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"provider not configured"}))
+		errRedirect("provider_not_configured")
 		return
 	}
 
-	// Generate state for CSRF protection
 	state, err := h.stateStore.CreateState()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to create auth state"}))
+		errRedirect("state_failed")
 		return
 	}
 
-	// Set state in cookie
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie(
-		OAuthStateCookieName,
-		state,
-		int(OAuthStateExpiry.Seconds()),
-		"/",
-		"",
-		h.sessionStore.secureCookie,
-		true,
-	)
+	redirectURI := c.Query("redirect_uri")
+	if redirectURI == "" {
+		redirectURI = "/"
+	}
 
-	// Get authorization URL
+	c.SetSameSite(http.SameSiteLaxMode)
+	maxAge := int(OAuthStateExpiry.Seconds())
+	secure := h.sessionStore.secureCookie
+	c.SetCookie("osduth_auth_redirect", redirectURI, maxAge, "/", "", secure, true)
+	c.SetCookie(OAuthStateCookieName, state, maxAge, "/", "", secure, true)
+
 	authURL, err := h.oauthConfig.GetAuthURL(provider, state)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to create auth URL"}))
+		errRedirect("auth_url_failed")
 		return
 	}
 
-	// Redirect to OAuth provider
 	c.Redirect(http.StatusTemporaryRedirect, authURL)
 }
 
 // Callback handles OAuth callback
 // GET /auth/callback/:provider
 func (h *Handler) Callback(c *gin.Context) {
-	providerStr := c.Param("provider")
-	provider := Provider(providerStr)
+	provider := Provider(c.Param("provider"))
+	secure := h.sessionStore.secureCookie
 
-	// Validate provider
+	// Helper: clear auth cookies and redirect with error
+	authError := func(code string) {
+		c.SetCookie("osduth_auth_redirect", "", -1, "/", "", secure, true)
+		c.SetCookie(OAuthStateCookieName, "", -1, "/", "", secure, true)
+		redirectPath, _ := c.Cookie("osduth_auth_redirect")
+		if redirectPath == "" {
+			redirectPath = "/"
+		}
+		h.redirect(c, redirectPath, map[string]string{"error": code})
+	}
+
 	if provider != ProviderGoogle && provider != ProviderGitHub {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"unsupported provider"}))
+		authError("unsupported_provider")
 		return
 	}
 
-	// Get state from query and cookie
 	queryState := c.Query("state")
 	cookieState, err := c.Cookie(OAuthStateCookieName)
-	if err != nil || cookieState == "" {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"missing OAuth state cookie"}))
+	if err != nil || cookieState == "" || queryState != cookieState {
+		authError("invalid_state")
 		return
 	}
 
-	// Verify states match
-	if queryState != cookieState {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"OAuth state mismatch"}))
-		return
-	}
-
-	// Validate state against database
 	valid, err := h.stateStore.ValidateState(queryState)
 	if err != nil || !valid {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"invalid or expired OAuth state"}))
+		authError("expired_state")
 		return
 	}
 
-	// Clear state cookie
-	c.SetCookie(OAuthStateCookieName, "", -1, "/", "", h.sessionStore.secureCookie, true)
+	c.SetCookie(OAuthStateCookieName, "", -1, "/", "", secure, true)
 
-	// Check for OAuth error
 	if errMsg := c.Query("error"); errMsg != "" {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"OAuth error: " + errMsg}))
+		authError("oauth_denied")
 		return
 	}
 
-	// Get authorization code
 	code := c.Query("code")
 	if code == "" {
-		c.JSON(http.StatusBadRequest, common.CreateErrorResponse([]string{"missing authorization code"}))
+		authError("missing_code")
 		return
 	}
 
-	// Exchange code for token
 	ctx := context.Background()
 	token, err := h.oauthConfig.ExchangeCode(ctx, provider, code)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to exchange code"}))
+		authError("token_exchange_failed")
 		return
 	}
 
-	// Get user info from provider
 	userInfo, err := h.oauthConfig.GetUserInfo(ctx, provider, token)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to get user info"}))
+		authError("userinfo_failed")
 		return
 	}
 
-	// Find or create user
 	user, err := h.findOrCreateUser(userInfo, provider, token.AccessToken, token.RefreshToken)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to create user"}))
+		authError("user_creation_failed")
 		return
 	}
 
-	// Check user status
 	if user.Status != StatusActive {
-		c.JSON(http.StatusForbidden, common.CreateErrorResponse([]string{"account is " + string(user.Status)}))
+		authError("account_" + string(user.Status))
 		return
 	}
 
-	// Create session
 	session, err := h.sessionStore.CreateSession(user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, common.CreateErrorResponse([]string{"failed to create session"}))
+		authError("session_failed")
 		return
 	}
 
-	// Set session cookie
 	h.sessionStore.SetSessionCookie(c, session.ID)
 
-	// Return success (or redirect to frontend)
-	c.JSON(http.StatusOK, common.CreateSuccessResponse(gin.H{
-		"message": "authenticated successfully",
-		"user": gin.H{
-			"id":          user.ID,
-			"email":       user.Email,
-			"displayName": user.DisplayName,
-			"role":        user.Role,
-		},
-	}))
+	redirectPath, _ := c.Cookie("osduth_auth_redirect")
+	if redirectPath == "" {
+		redirectPath = "/"
+	}
+	c.SetCookie("osduth_auth_redirect", "", -1, "/", "", secure, true)
+
+	h.redirect(c, redirectPath, map[string]string{"auth": "success"})
 }
 
 func (h *Handler) findOrCreateUser(info *OAuthUserInfo, provider Provider, accessToken, refreshToken string) (*User, error) {
@@ -302,21 +301,20 @@ func (h *Handler) Me(c *gin.Context) {
 }
 
 // Logout logs out the current user
-// POST /auth/logout
+// GET /auth/logout
 func (h *Handler) Logout(c *gin.Context) {
-	sessionID, err := h.sessionStore.GetSessionFromCookie(c)
-	if err == nil && sessionID != "" {
-		err := h.sessionStore.DeleteSession(sessionID)
-		if err != nil {
-			return
-		}
+	sessionID, _ := h.sessionStore.GetSessionFromCookie(c)
+	if sessionID != "" {
+		h.sessionStore.DeleteSession(sessionID)
 	}
-
 	h.sessionStore.ClearSessionCookie(c)
 
-	c.JSON(http.StatusOK, common.CreateSuccessResponse(gin.H{
-		"message": "logged out successfully",
-	}))
+	// API clients get JSON, browsers get redirect
+	if strings.Contains(c.GetHeader("Accept"), "application/json") {
+		c.JSON(http.StatusOK, common.CreateSuccessResponse(gin.H{"message": "logged out"}))
+	} else {
+		h.redirect(c, "/", map[string]string{"auth": "logged_out"})
+	}
 }
 
 // ListTokens returns all tokens for the current user
